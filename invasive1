@@ -1,0 +1,50 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from skimage import transform
+import matplotlib.image as mping
+train_labels=pd.read_csv('/home/liyi/kag/train_labels.csv')
+
+test_path='/home/liyi/kag/test/'
+train_path='/home/liyi/kag/train/'
+train_image = np.empty(shape=(1500, 150, 200, 3))
+train_label = np.array(train_labels.invasive.values[0:1500])
+val_image = np.empty(shape=(795, 150, 200, 3))
+val_label = np.array(train_labels.invasive.values[1500:])
+
+test_path='/home/liyi/kag/test/'
+train_path='/home/liyi/kag/train/'
+def read_picture():
+    for i in range(1500):
+        train_image[i]=transform.resize(mping.imread(train_path+str(1+i)+'.jpg'),output_shape=(150,200,3))
+    for i in range(795):
+        val_image[i]=transform.resize(mping.imread(train_path+str(1501+i)+'.jpg'),output_shape=(150,200,3))
+    return train_image,val_image
+
+train_image,val_image=read_picture()
+
+from keras.models import Sequential
+from keras.layers import Convolution2D, MaxPooling2D, ZeroPadding2D
+from keras.layers import Flatten, Dense, Dropout
+from keras.optimizers import Adam
+model1 = Sequential()
+model1.add(Convolution2D(32, 3,3, activation='relu', input_shape=(150, 200,3)))
+model1.add(Convolution2D(32, 3,3, activation='relu'))
+model1.add(MaxPooling2D(pool_size=(2, 2)))
+model1.add(Dropout(0.25))
+
+model1.add(Convolution2D(64, 3,3, activation='relu'))
+model1.add(Convolution2D(64, 3,3, activation='relu'))
+model1.add(MaxPooling2D(pool_size=(2, 2)))
+model1.add(Dropout(0.25))
+
+model1.add(Flatten())
+model1.add(Dense(256, activation='relu'))
+model1.add(Dropout(0.5))
+model1.add(Dense(1, activation='sigmoid'))
+model1.compile(optimizer=Adam(lr=0.001, beta_1=0.9,beta_2=0.999, epsilon=1e-08),
+              loss='binary_crossentropy', metrics=['accuracy'])
+print(model1.summary())
+model1.fit(train_image, train_label, nb_epoch=5, batch_size=100)
+#acc = model1.evaluate(val_image,val_label)
+print acc
